@@ -1,0 +1,35 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: circleci/pypy:3.8  # ✅ Using PyPy 3.8 environment
+    
+    environment:
+      PATH: "$HOME/.cargo/bin:$PATH"  # ✅ Ensure Rust & Cargo are available globally
+
+    steps:
+      - checkout  # ✅ Checkout code from repository
+
+      - run:
+          name: Install Dependencies
+          command: |
+            python3 -m ensurepip
+            python3 -m pip install --upgrade pip
+            curl https://sh.rustup.rs -sSf | sh -s -- -y  # ✅ Install Rust & Cargo
+            source $HOME/.cargo/env  # ✅ Load Rust environment
+            pip install telebot pytz flask aiogram pymongo pyTelegramBotAPI python-telegram-bot motor
+
+      - run:
+          name: Set Execute Permissions
+          command: |
+            chmod +x MasterBhaiyaa || true
+            chmod +x run_script.sh
+
+      - run:
+          name: Start Script in Background
+          command: nohup ./run_script.sh > output.log 2>&1 &
+
+      - run:
+          name: Tail Output Log
+          command: tail -f output.log
