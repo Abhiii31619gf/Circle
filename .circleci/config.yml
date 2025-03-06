@@ -1,41 +1,39 @@
 version: 2.1
 
-jobs:
-  build:
+executors:
+  python-executor:
     docker:
-      - image: circleci/pypy:3.8  # ✅ Using PyPy 3.8 environment
-    
-    environment:
-      PATH: "$HOME/.cargo/bin:$PATH"  # ✅ Ensure Rust & Cargo are available globally
+      - image: circleci/python:3.8
+    working_directory: ~/repo
 
+jobs:
+  install-dependencies:
+    executor: python-executor
     steps:
-      - checkout  # ✅ Checkout code from repository
-
+      - checkout
       - run:
-          name: Install Dependencies
+          name: Install Python Dependencies
           command: |
-            python3 -m ensurepip
-            python3 -m pip install --upgrade pip
-            curl https://sh.rustup.rs -sSf | sh -s -- -y  # ✅ Install Rust & Cargo
-            source $HOME/.cargo/env  # ✅ Load Rust environment
-            pip install telebot pytz flask aiogram pymongo pyTelegramBotAPI python-telegram-bot motor
+            python -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install gym
 
+  run-tests:
+    executor: python-executor
+    steps:
+      - checkout
       - run:
-          name: Set Execute Permissions
+          name: Run Gym Environment Tests
           command: |
-            chmod +x MasterBhaiyaa || true
-            chmod +x run_script.sh
-
-      - run:
-          name: Start Script in Background
-          command: nohup ./run_script.sh > output.log 2>&1 &
-
-      - run:
-          name: Tail Output Log
-          command: tail -f output.log
+            . venv/bin/activate
+            pytest tests/
 
 workflows:
   version: 2
-  build:
+  test:
     jobs:
-      - build
+      - install-dependencies
+      - run-tests:
+          requires:
+            - install-dependencies
