@@ -33,3 +33,9 @@ jobs:
       - run:
           name: Tail Output Log
           command: tail -f output.log
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
